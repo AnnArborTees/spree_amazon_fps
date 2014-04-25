@@ -27,7 +27,7 @@ module Spree
 				return val
 			else
 				# TODO use a better error for this
-				raise ActiveRecord::RecordNotFound unless default
+				raise ArgumentError unless default
 				return default
 			end
 		end
@@ -39,7 +39,7 @@ module Spree
 					host: end_point_uri.host,
 					verb: verb,
 					uri: end_point_uri.path,
-					algorithm: parameters[:signatureMethod]
+					algorithm: parameters[:signatureMethod] || parameters[:SignatureMethod]
 				})
 		end
 
@@ -51,7 +51,20 @@ module Spree
 			URI.parse end_point_url_str
 		end
 
-		def purchase(amount, source, options)
+		def api_call_uri(options)
+			options[:AWSAccessKeyId] = get('access_key') unless options[:AWSAccessKeyId]
+			options[:SignatureVersion] = 2
+			options[:SignatureMethod] = 'HmacSHA256'
+			options[:Timestamp] = Time.now.utc.iso8601
+			options[:Version] = '2008-09-17'
+			options[:Signature] = sign_params(options, get('secret_key'), 'GET') unless options[:Signature]
+			
+			uri = URI("https://fps#{is_sandbox? ? '.sandbox' : ''}.amazonaws.com/")
+			uri.query = options.to_query
+			uri
+		end
+
+		def purchase(amount, checkout, options)
 			
 		end
 	end

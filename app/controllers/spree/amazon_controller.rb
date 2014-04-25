@@ -1,72 +1,119 @@
+require 'net/http'
+
 module Spree
-	class AmazonController < StoreController
-		def fps
-			order = current_order
-			raise(ActiveRecord::RecordNotFound) unless order
+  class AmazonController < StoreController
+    def fps
+      order = current_order
+      raise(ActiveRecord::RecordNotFound) unless order
 
-			item_names = order.line_items.map { |item| item.product.name + " x#{item.quantity}: " + item.display_total.to_s }
+      item_names = order.line_items.map { |item| item.product.name + " x#{item.quantity}: " + item.display_total.to_s }
 
-			test_render_str = 'names: '
-			test_render_str << item_names.join(', ')
+      test_render_str = 'names: '
+      test_render_str << item_names.join(', ')
 
-			test_render_str << "<br />adjustments: "
-			test_render_str << order.adjustments.all.map { |a| a.label }.join(', ')
+      test_render_str << "<br />adjustments: "
+      test_render_str << order.adjustments.all.map { |a| a.label }.join(', ')
 
-			test_render_str << "<br />total cost: " << order.display_total.to_s
+      test_render_str << "<br />total cost: " << order.display_total.to_s
 
-			@amazon_params = {
-				accessKey:   payment_method.get(:access_key),
-				amount:      order.total,
-				description: item_names.join('; '),
-				referenceId: "order#{order.id}",
+      @amazon_params = {
+        accessKey:   payment_method.get(:access_key),
+        amount:      order.total,
+        description: item_names.join('; '),
+        # referenceId: "order#{order.id}",
 
-				signatureMethod:  'HmacSHA256',
-				signatureVersion: '2',
+        signatureMethod:  'HmacSHA256',
+        signatureVersion: '2',
 
-				returnUrl: 'http://test.com:3000/amazon/complete',
-				abandonUrl: 'http://test.com:3000/amazon/error'
-			}
+        returnUrl: full_url_for(controller: 'amazon',
+                                action: 'complete'),
+        abandonUrl: full_url_for(controller: 'amazon',
+                                 action: 'abort'),
+      }
 
-			signature = payment_method.sign_params(
-				@amazon_params, 
-				payment_method.get('secret_key'),
-				'POST'
-			)
-			@amazon_params[:signature] = signature
+      signature = payment_method.sign_params(
+        @amazon_params, 
+        payment_method.get('secret_key'),
+        'POST'
+      )
+      @amazon_params[:signature] = signature
 
 
-			test_render_str << '<br /><br />'
-			@amazon_params.each_pair do |key, val|  
-				test_render_str << key.to_s << ": " << val.to_s
-				test_render_str << "<br />"
-			end
+      test_render_str << '<br /><br />'
+      @amazon_params.each_pair do |key, val|  
+        test_render_str << key.to_s << ": " << val.to_s
+        test_render_str << "<br />"
+      end
 
-			puts '*****************************************'
-			puts test_render_str.gsub('<br />', "\n")
-			puts '*****************************************'
+      puts '*****************************************'
+      puts test_render_str.gsub('<br />', "\n")
+      puts '*****************************************'
 
-			@end_point = payment_method.end_point_url_str
+      @end_point = payment_method.end_point_url_str
 
-			# render inline: test_render_str
-		end
+      # render inline: test_render_str
+    end
 
-		def complete
-			order = current_order
-			raise(ActiveRecord::RecordNotFound) unless order
+    def complete
+      order = current_order
+      raise(ActiveRecord::RecordNotFound) unless order
 
-			rend = ""
-			params.each do |k,v|
-				rend << k << ": " << v << "<br />"
-			end
+      rend = ''
+      redirect_to '404.html' unless verify_signature
 
-			rend << "<a href='/checkout/delivery'>Back to checkout</a>"
+      ##
+      # order.payments.create!({
+      #   source: Spree::AmazonCheckout.create({
+      #     reference_id: params[:referenceId],
+      #     status:       params[:status],
+      #   }),
+      #   amount: order.total,
+      #   payment_method: payment_method
+      # })
+      # order.next
+      # if order.complete?
+      #   rend << "COMPLETE<br />"
+      # else
+      #   rend << "NOOOOOOOO<br />"
+      # end
+      ##
 
-			render text: rend
-		end
+      rend << "<br /><br /><a href='/checkout/delivery'>Back to checkout</a>"
 
-	private
-		def payment_method
-			Spree::PaymentMethod.find params[:payment_method_id]
-		end
-	end
+      render text: rend
+    end
+
+    def abort
+      rend = 'oh nooooooooo (aborted)<br />'
+      rend << "<a href='/checkout/delivery'>Back to checkout</a>"
+      render text: rend
+    end
+
+  private
+    def payment_method
+      Spree::PaymentMethod.where(type: 'Spree::Gateway::AmazonFps').first
+    end
+
+    def full_url_for(options)
+      url_for(options.merge({host: request.env['SERVER_NAME']}))
+    end
+
+    def verify_signature
+      end_point = full_url_for(controller: params[:controller].to_s,
+                               action: params[:action].to_s)
+      http_params = params.reject { |k,v| k.to_sym == :controller || k.to_sym == :action }
+
+      req_params = {
+        :Action => 'VerifySignature',
+        :UrlEndPoint => end_point,
+        :HttpParameters => http_params.to_query,
+      }
+
+      resp = Net::HTTP.get payment_method.api_call_uri(req_params)
+
+      # Kind of cheap and dirty way to check. Perhaps clean this up later
+      return true if resp.include?('<VerificationStatus>Success</VerificationStatus>')
+      false
+    end
+  end
 end
