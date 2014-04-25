@@ -1,3 +1,4 @@
 Spree::Core::Engine.routes.draw do
-  # Add your extension routes here
+  post 'amazon/fps' => 'amazon#fps'
+  get 'amazon/complete' => 'amazon#complete'
 end

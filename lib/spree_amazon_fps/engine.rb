@@ -16,5 +16,9 @@ module SpreeAmazonFps
     end
 
     config.to_prepare &method(:activate).to_proc
+
+    initializer "spree.amazon_fps.payment_methods", after: "spree.register.payment_methods" do |app|
+      app.config.spree.payment_methods << Spree::Gateway::AmazonFps
+    end
   end
 end
