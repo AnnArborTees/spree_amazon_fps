@@ -1,0 +1,11 @@
+<form action="<%= @end_point %>" method='POST' id='amazon_form'>
+<% @amazon_params.each do |k,v| %>
+	<input type='hidden' name='<%= k.to_s %>' value='<%= v.to_s %>' />
+<% end %>
+</form>
+
+<script type="text/javascript">
+$(document).ready(function() {
+	$('#amazon_form').submit();
+});
+</script>

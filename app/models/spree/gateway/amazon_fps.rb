@@ -32,19 +32,23 @@ module Spree
 			end
 		end
 
-		def sign_params(parameters, secret_key, uri, verb)
+		def sign_params(parameters, secret_key, verb)
 			::Amazon::FPS::SignatureUtils.sign_parameters({
 					parameters: parameters,
 					aws_secret_key: secret_key,
-					host: uri.host,
+					host: end_point_uri.host,
 					verb: verb,
-					uri: uri.path,
-					algorithm: parameters['signatureMethod']
+					uri: end_point_uri.path,
+					algorithm: parameters[:signatureMethod]
 				})
 		end
 
-		def end_point_url
-			URI.parse "https://authorize.#{is_sandbox? ? 'payments-sandbox' : 'payments'}.amazon.com/pba/paypipeline"
+		def end_point_url_str
+			"https://authorize.#{is_sandbox? ? 'payments-sandbox' : 'payments'}.amazon.com/pba/paypipeline"
+		end
+
+		def end_point_uri
+			URI.parse end_point_url_str
 		end
 
 		def purchase(amount, source, options)
