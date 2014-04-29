@@ -58,12 +58,11 @@ module Spree
       raise(ActiveRecord::RecordNotFound) unless order
 
       rend = ''
-      redirect_to '404.html' unless verify_signature
-
+      ActionController::RoutingError.new('Not Found') unless verify_signature
       
       order.payments.create!({
         source: Spree::AmazonCheckout.create({
-          reference_id: params[:referenceId],
+          transaction_id: params[:transactionId],
           status:       params[:status],
         }),
         amount: order.total,
@@ -90,6 +89,7 @@ module Spree
 
   private
     def payment_method
+      # TODO this should search based off a parameter
       Spree::PaymentMethod.where(type: 'Spree::Gateway::AmazonFps').first
     end
 

@@ -10,10 +10,23 @@ module Spree
       def initialize(action, response_xml)
         @action = action
         @doc = Nokogiri::XML(response_xml)
+        puts '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%'
+        puts response_xml
+        puts '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%'
       end
 
       def valid?
+        return true if error
         !@doc.css("#{@action}Response").empty?
+      end
+
+      def error
+        error_code = @doc.css('Response > Errors > Error > Code')
+        if error_code.empty?
+          return nil
+        else
+          return error_code.first.content
+        end
       end
 
       def respond_to?(name)
@@ -21,6 +34,7 @@ module Spree
       end
 
       def method_missing(name, *args, &block)
+        return nil if error
         super unless respond_to? name
         @doc.css("#{@action}Response > #{@action}Result > #{name}").first.content
       end
@@ -32,7 +46,8 @@ module Spree
       end
 
       def respond_to?(name)
-        call(name, params).valid?
+        r = call(name, params)
+        r.valid? && !r.error
       end
 
       def call(action, params)
@@ -76,13 +91,11 @@ module Spree
       if val.present?
         return val
       else
-        # TODO use a better error for this
         raise ArgumentError unless default
-        return default
       end
     end
 
-    def sign_params(parameters, verb)
+    def sign_params(parameters, verb = 'GET')
       ::Amazon::FPS::SignatureUtils.sign_parameters({
           parameters: parameters,
           aws_secret_key: get('secret_key'),
@@ -102,14 +115,21 @@ module Spree
     end
 
     def api_call_uri(options)
-      options[:AWSAccessKeyId] = get('access_key') unless options[:AWSAccessKeyId]
+      options[:AWSAccessKeyId] = get('access_key')
       options[:SignatureVersion] = 2
-      options[:SignatureMethod] = 'HmacSHA256'
+      options[:SignatureMethod] = 'HmacSHA256' unless options[:SignatureMethod]
       options[:Timestamp] = Time.now.utc.iso8601
       options[:Version] = '2008-09-17'
-      options[:Signature] = sign_params(options, 'GET') unless options[:Signature]
+      options.delete :Signature if options[:Signature]
+      options[:Signature] = sign_params(options, 'GET')
       
       uri = URI("https://fps#{is_sandbox? ? '.sandbox' : ''}.amazonaws.com/")
+
+      puts '#################API_CALL#################'
+      puts 'uri: ' + uri.to_s
+      puts 'options: ' + options.to_s
+      puts '##################################'
+
       uri.query = options.to_query
       uri
     end
@@ -119,12 +139,13 @@ module Spree
     end
 
     def purchase(amount, checkout, options)
-      # Also consider running the GetTransactionStatus api call here.
+      # api_resp = api.GetTransactionStatus :TransactionId => checkout.transaction_id
+      # unfortunately, it seems GetTransactionStatus is not gonna happen
 
-      # Remember this function is to return a class that has a success? function
-      # and an authorization function 
-
-      return nil
+      Class.new do
+        def success?; true; end
+        def authorization; nil; end
+      end.new
     end
   end
 end
