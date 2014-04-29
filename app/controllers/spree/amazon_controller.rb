@@ -102,11 +102,6 @@ module Spree
                                action: params[:action].to_s)
       http_params = params.reject { |k,v| k.to_sym == :controller || k.to_sym == :action }
 
-      req_params = {
-        :UrlEndPoint => end_point,
-        :HttpParameters => http_params.to_query,
-      }
-
       resp = payment_method.api.VerifySignature :UrlEndPoint => end_point, :HttpParameters => http_params.to_query
 
       # Kind of cheap and dirty way to check. Perhaps clean this up later
