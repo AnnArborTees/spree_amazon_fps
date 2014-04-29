@@ -142,10 +142,21 @@ module Spree
       # api_resp = api.GetTransactionStatus :TransactionId => checkout.transaction_id
       # unfortunately, it seems GetTransactionStatus is not gonna happen
 
+      checkout.status = "Complete"
+
       Class.new do
         def success?; true; end
         def authorization; nil; end
       end.new
+    end
+
+    def refund(payment, amount)
+      resp = payment_method.api.Refund ({
+          :CallerReference => "#{payment.source.transaction_id}-refund",
+          :TransactionId   => payment.source.transaction_id,
+          :RefundAmount    => amount
+        })
+      return nil
     end
   end
 end

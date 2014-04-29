@@ -1,0 +1,19 @@
+<fieldset data-hook="amazon">
+
+	<div class="row">
+		<div class="alpha six columns">
+			<dl>
+				<dt>Buyer Name</dt>
+				<dd><%= payment.source.customer_name %></dt>
+
+				<dt>Transaction ID</dt>
+				<dd><%= payment.source.transaction_id %></dd>
+			</dl>
+		</div>
+	</div>
+
+	<% if payment.source.status != 'Refunded' %>
+		<%= button_link_to 'Refund', 'google.com', icon: 'icon-dollar' %>
+	<% end %>
+
+</fieldset>
