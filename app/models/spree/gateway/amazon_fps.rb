@@ -17,6 +17,10 @@ module Spree
 			'amazon_fps'
 		end
 
+		def provider_class
+			return ::Spree::Gateway::AmazonFps
+		end
+
 		def is_sandbox?
 			preferred_server.present? && preferred_server == 'sandbox'
 		end
@@ -32,10 +36,10 @@ module Spree
 			end
 		end
 
-		def sign_params(parameters, secret_key, verb)
+		def sign_params(parameters, verb)
 			::Amazon::FPS::SignatureUtils.sign_parameters({
 					parameters: parameters,
-					aws_secret_key: secret_key,
+					aws_secret_key: get('secret_key'),
 					host: end_point_uri.host,
 					verb: verb,
 					uri: end_point_uri.path,
@@ -52,6 +56,8 @@ module Spree
 		end
 
 		def api_call_uri(options)
+			# This MIGHT be worth moving over to api_call.rb.
+
 			options[:AWSAccessKeyId] = get('access_key') unless options[:AWSAccessKeyId]
 			options[:SignatureVersion] = 2
 			options[:SignatureMethod] = 'HmacSHA256'
@@ -64,8 +70,21 @@ module Spree
 			uri
 		end
 
+		def api
+			::Amazon::FPS::ApiCall.new(self)
+		end
+
 		def purchase(amount, checkout, options)
-			
+			# Consider verifying the signature here instead of in the Amazon#complete
+			# action.
+
+			# Also consider running the GetTransactionStatus api call here.
+
+			# ALSO learn how to use Nokogiri for XML or something, then you can
+			# maybe parse the XML contents into a hash or object of some sort.
+
+			# Remember this function returns a class that has a success? function
+			# and an authorization function
 		end
 	end
 end

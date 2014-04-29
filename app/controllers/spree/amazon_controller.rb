@@ -32,8 +32,7 @@ module Spree
       }
 
       signature = payment_method.sign_params(
-        @amazon_params, 
-        payment_method.get('secret_key'),
+        @amazon_params,
         'POST'
       )
       @amazon_params[:signature] = signature
@@ -61,22 +60,22 @@ module Spree
       rend = ''
       redirect_to '404.html' unless verify_signature
 
-      ##
-      # order.payments.create!({
-      #   source: Spree::AmazonCheckout.create({
-      #     reference_id: params[:referenceId],
-      #     status:       params[:status],
-      #   }),
-      #   amount: order.total,
-      #   payment_method: payment_method
-      # })
-      # order.next
-      # if order.complete?
-      #   rend << "COMPLETE<br />"
-      # else
-      #   rend << "NOOOOOOOO<br />"
-      # end
-      ##
+      
+      order.payments.create!({
+        source: Spree::AmazonCheckout.create({
+          reference_id: params[:referenceId],
+          status:       params[:status],
+        }),
+        amount: order.total,
+        payment_method: payment_method
+      })
+      order.next
+      if order.complete?
+        rend << "COMPLETE<br />"
+      else
+        rend << "NOOOOOOOO<br />"
+      end
+      
 
       rend << "<br /><br /><a href='/checkout/delivery'>Back to checkout</a>"
 
@@ -104,12 +103,11 @@ module Spree
       http_params = params.reject { |k,v| k.to_sym == :controller || k.to_sym == :action }
 
       req_params = {
-        :Action => 'VerifySignature',
         :UrlEndPoint => end_point,
         :HttpParameters => http_params.to_query,
       }
 
-      resp = Net::HTTP.get payment_method.api_call_uri(req_params)
+      resp = payment_method.api.VerifySignature :UrlEndPoint => end_point, :HttpParameters => http_params.to_query
 
       # Kind of cheap and dirty way to check. Perhaps clean this up later
       return true if resp.include?('<VerificationStatus>Success</VerificationStatus>')
