@@ -36,7 +36,7 @@ module Spree
       end
 
       def call(action, params)
-        ApiResponse.new(action, Net::HTTP.get @amazon.api_call_uri(params))
+        ApiResponse.new(action, Net::HTTP.get(@amazon.api_call_uri(params)))
       end
 
       def method_missing(name, *args, &block)
@@ -121,10 +121,10 @@ module Spree
     def purchase(amount, checkout, options)
       # Also consider running the GetTransactionStatus api call here.
 
-      # Remember this function returns a class that has a success? function
+      # Remember this function is to return a class that has a success? function
       # and an authorization function 
 
-
+      return nil
     end
   end
 end
