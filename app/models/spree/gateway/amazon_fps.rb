@@ -142,7 +142,7 @@ module Spree
       uri.query = options.to_query
 
       puts 'full path: ' + uri.to_s
-      puts '##################################'
+      puts '##########################################'
 
       uri
     end
@@ -152,15 +152,21 @@ module Spree
     end
 
     def purchase(amount, checkout, options)
-      # api_resp = api.GetTransactionStatus :TransactionId => checkout.transaction_id
-      # unfortunately, it seems GetTransactionStatus is not gonna happen
+      resp = api.GetTransactionStatus :TransactionId => checkout.transaction_id
 
-      checkout.status = "Complete"
-
-      Class.new do
-        def success?; true; end
+      result = Class.new do
+        def initialize(s); @success = s; end
+        def success?; @success; end
         def authorization; nil; end
-      end.new
+      end.new resp.StatusCode == 'Success'
+
+      if result.success?
+        checkout.status = 'Complete'
+      else
+        checkout.status = 'Failed'
+      end
+
+      result
     end
 
     def refund(payment, amount)

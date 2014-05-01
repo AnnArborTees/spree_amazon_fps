@@ -7,6 +7,7 @@ module Spree
       raise(ActiveRecord::RecordNotFound) unless order
 
       item_names = order.line_items.map { |item| item.product.name + " x#{item.quantity}: " + item.display_total.to_s }
+      item_names << "Shipping: #{order.display_shipment_total}"
 
       test_render_str = 'names: '
       test_render_str << item_names.join(', ')
@@ -19,7 +20,7 @@ module Spree
       @amazon_params = {
         accessKey:   payment_method.get(:access_key),
         amount:      order.total,
-        description: item_names.join('; '),
+        description: item_names.join(' | '),
         # referenceId: "order#{order.id}",
 
         signatureMethod:  'HmacSHA256',
@@ -29,6 +30,8 @@ module Spree
                                 action: 'complete'),
         abandonUrl: full_url_for(controller: 'amazon',
                                  action: 'abort'),
+
+        immediateReturn: '1',
       }
 
       signature = payment_method.sign_params(
@@ -57,8 +60,7 @@ module Spree
       order = current_order
       raise(ActiveRecord::RecordNotFound) unless order
 
-      rend = ''
-      raise ActionController::RoutingError.new('Not Found') unless verify_signature
+      raise ActionController::RoutingError.new('Invalid Amazon signature') unless verify_signature
       
       order.payments.create!({
         source: Spree::AmazonCheckout.create({
@@ -70,15 +72,14 @@ module Spree
       })
       order.next
       if order.complete?
-        rend << "COMPLETE<br />"
+        flash.notice = Spree.t(:order_processed_successfully)
+        flash[:commerce_tracking] = "nothing special"
+        redirect_to order_path(order, token: order.token)
       else
-        rend << "NOOOOOOOO<br />"
+        # TODO somehow grab a description of the error.
+        flash[:error] = 'Amazon payment failed. You have not been charged.'
+        redirect_to checkout_state_path(order.state)
       end
-      
-
-      rend << "<br /><br /><a href='/checkout/delivery'>Back to checkout</a>"
-
-      render text: rend
     end
 
     def abort
