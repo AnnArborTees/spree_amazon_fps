@@ -29,6 +29,10 @@ module Spree
         end
       end
 
+      def error_message
+        @doc.css('Response > Errors > Error > Message').first.content if error
+      end
+
       def respond_to?(name)
         !@doc.css("#{@action}Response > #{@action}Result > #{name}").empty?
       end
@@ -95,13 +99,14 @@ module Spree
       end
     end
 
-    def sign_params(parameters, verb = 'GET')
+    def sign_params(parameters, verb, uri = nil)
+      uri = end_point_uri if uri.nil?
       ::Amazon::FPS::SignatureUtils.sign_parameters({
           parameters: parameters,
-          aws_secret_key: get('secret_key'),
-          host: end_point_uri.host,
+          aws_secret_key: get(:secret_key),
+          host: uri.host,
           verb: verb,
-          uri: end_point_uri.path,
+          uri: (uri.path.empty? ? '/' : uri.path),
           algorithm: parameters[:signatureMethod] || parameters[:SignatureMethod]
         })
     end
@@ -115,22 +120,30 @@ module Spree
     end
 
     def api_call_uri(options)
-      options[:AWSAccessKeyId] = get('access_key')
+      uri = URI("https://fps#{is_sandbox? ? '.sandbox' : ''}.amazonaws.com/")
+
+      options[:AWSAccessKeyId] = get(:access_key)
       options[:SignatureVersion] = 2
       options[:SignatureMethod] = 'HmacSHA256' unless options[:SignatureMethod]
       options[:Timestamp] = Time.now.utc.iso8601
       options[:Version] = '2008-09-17'
       options.delete :Signature if options[:Signature]
-      options[:Signature] = sign_params(options, 'GET')
-      
-      uri = URI("https://fps#{is_sandbox? ? '.sandbox' : ''}.amazonaws.com/")
+      options[:Signature] = sign_params(options, 'GET', uri)
+
+      # Weird workaround for a bug that causes Hash#sort to raise an error 
+      # if keys in the hash contains dots. For the workaround, I use 
+      # underscores instead.
+      options = Hash[options.map { |k,v| [k.to_s.gsub('_','.'), v] }]
 
       puts '#################API_CALL#################'
       puts 'uri: ' + uri.to_s
       puts 'options: ' + options.to_s
-      puts '##################################'
 
       uri.query = options.to_query
+
+      puts 'full path: ' + uri.to_s
+      puts '##################################'
+
       uri
     end
 
@@ -151,12 +164,29 @@ module Spree
     end
 
     def refund(payment, amount)
-      resp = payment_method.api.Refund ({
-          :CallerReference => "#{payment.source.transaction_id}-refund",
-          :TransactionId   => payment.source.transaction_id,
-          :RefundAmount    => amount
+      resp = api.Refund ({
+        :CallerReference      => "#{payment.source.transaction_id}-refund",
+        :RefundAmount_CurrencyCode => 'USD',
+        :RefundAmount_Value       => amount,
+        :TransactionId => payment.source.transaction_id
+      })
+      if !resp.error && resp.TransactionStatus != 'Cancelled' && resp.TransactionStatus != 'Failure'
+        payment.source.update_attributes({
+          refunded_at: Time.now,
+          refund_transaction_id: resp.TransactionId,
+          status: 'Refunded'
         })
-      return nil
+
+        payment.class.create!(
+          order: payment.order,
+          source: payment,
+          payment_method: payment.payment_method,
+          amount: amount.to_f * -1,
+          response_code: resp.TransactionId,
+          state: 'completed'
+        )
+      end
+      resp
     end
   end
 end

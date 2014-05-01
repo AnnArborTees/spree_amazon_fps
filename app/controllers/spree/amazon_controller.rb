@@ -58,7 +58,7 @@ module Spree
       raise(ActiveRecord::RecordNotFound) unless order
 
       rend = ''
-      ActionController::RoutingError.new('Not Found') unless verify_signature
+      raise ActionController::RoutingError.new('Not Found') unless verify_signature
       
       order.payments.create!({
         source: Spree::AmazonCheckout.create({

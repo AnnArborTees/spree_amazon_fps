@@ -69,8 +69,12 @@ class SignatureUtils
 
 
     # exclude any existing Signature parameter from the canonical string
-    sorted = (parameters.reject { |k, v| k == SIGNATURE_KEYNAME }).sort
-    
+    sorted = (parameters.reject { |k, v| k == SIGNATURE_KEYNAME }).sort { |x,y| (x.nil? || y.nil? || x[0].nil? || y[0].nil?)  ?  0 :  (x[0] <=> y[0]) }
+    # Replace underscores with dots - underscores are used because of a bug 
+    # that causes Hash#sort to raise an error when used on a hash with keys 
+    # that contain dots.
+    sorted.map! { |e| [e[0].to_s.gsub('_', '.'), e[1]] }
+
     canonical = "#{verb}\n#{host}\n#{uri}\n"
     isFirst = true
 
