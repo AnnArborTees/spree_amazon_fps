@@ -1,7 +1,7 @@
 SpreeAmazonFps
 ==============
 
-Introduction goes here.
+Amazon Flexible Payment System as a payment gateway for Spree.
 
 Installation
 ------------
