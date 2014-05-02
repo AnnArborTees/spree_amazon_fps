@@ -26,10 +26,14 @@ module Spree
         signatureMethod:  'HmacSHA256',
         signatureVersion: '2',
 
-        returnUrl: full_url_for(controller: 'amazon',
-                                action: 'complete'),
-        abandonUrl: full_url_for(controller: 'amazon',
-                                 action: 'abort'),
+        returnUrl:  full_url_for(action: 'complete'),
+        abandonUrl: full_url_for(action: 'abort'),
+        ipnUrl:     full_url_for(action: 'ipn'),
+
+        referenceId: Spree::AmazonCheckout.create({
+                    status: 'Incomplete',
+                    payment_method_id: payment_method.id
+                  }).id.to_s,
 
         immediateReturn: '1',
       }
@@ -53,7 +57,7 @@ module Spree
 
       @end_point = payment_method.end_point_url_str
 
-      # render inline: test_render_str
+      render inline: test_render_str
     end
 
     def complete
@@ -62,11 +66,13 @@ module Spree
 
       raise ActionController::RoutingError.new('Invalid Amazon signature') unless verify_signature
       
+      checkout = Spree::AmazonCheckout.find params[:referenceId]
+      checkout.update_attributes(transaction_id: params[:transactionId])
+
+      # Might have to somehow move this logic into a separate function
+      # in case of IPN working
       order.payments.create!({
-        source: Spree::AmazonCheckout.create({
-          transaction_id: params[:transactionId],
-          status:       params[:status],
-        }),
+        source: checkout,
         amount: order.total,
         payment_method: payment_method
       })
@@ -88,14 +94,28 @@ module Spree
       render text: rend
     end
 
+    def ipn
+      # Testing this will require an open port
+      puts '@@@@####$$$$$$%%%%%%%%@@@@@@####$$$%%%%@@@@@####$$%%%'
+      puts 'RECEIVED IPN WHOAAAAAAAAAAAAAAA'
+      puts 'HERE ARE THE PARAMS'
+      puts params.to_s
+      puts '@@@@####$$$$$$%%%%%%%%@@@@@@####$$$%%%%@@@@@####$$%%%'
+    end
+
   private
     def payment_method
-      # TODO this should search based off a parameter
-      Spree::PaymentMethod.where(type: 'Spree::Gateway::AmazonFps').first
+      if params[:payment_method_id]
+        Spree::PaymentMethod.find(params[:payment_method_id])
+      elsif params[:referenceId]
+        Spree::AmazonCheckout.find(params[:referenceId]).payment_method
+      else
+        raise ActiveRecord::RecordNotFound.new("There is no PaymentMethod information in the parameters")
+      end
     end
 
     def full_url_for(options)
-      url_for(options.merge({host: request.env['SERVER_NAME']}))
+      url_for({controller: params[:controller]}.merge(options.merge({host: request.env['SERVER_NAME']})))
     end
 
     def verify_signature

@@ -8,7 +8,7 @@ Spree::Admin::PaymentsController.class_eval do
 		elsif request.post?
 			response = @payment.payment_method.refund(@payment, params[:refund_amount])
 			if !response.error && response.TransactionStatus != 'Cancelled' && response.TransactionStatus != 'Failure'
-				flash[:success] = 'Refund Successful!'
+				flash[:success] = 'Refund Request Sent!'
 				redirect_to admin_order_payments_path(@order)
 			else
 				if(response.error)
