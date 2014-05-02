@@ -165,6 +165,7 @@ module Spree
       else
         checkout.status = 'Failed'
       end
+      checkout.save
 
       result
     end
