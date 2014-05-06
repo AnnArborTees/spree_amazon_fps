@@ -1,8 +1,8 @@
 module AmazonFpsHelpers
 	def amazon_email
-		'nigel@wolverinetshirtcompany.com'
+		'spree-amazon-fps@mailinator.com'
 	end
 	def amazon_password
-		'SuperSecurePw4Nigel'
+		'6dY4haWB'
 	end
 end

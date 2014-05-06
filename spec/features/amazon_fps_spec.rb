@@ -45,7 +45,8 @@ describe 'As a user', js: true do
         fill_in 'password', with: amazon_password
         find('#signInSubmit').click
       end
-      2.times do first('input.submit').click end
+      expect(page).to have_content "Test Product x1"
+      2.times do first('input.submit').click unless page.has_content? 'Processing Payment' end
       wait_for_redirect
       expect(page).to have_content 'Your order has been processed successfully'
     end
