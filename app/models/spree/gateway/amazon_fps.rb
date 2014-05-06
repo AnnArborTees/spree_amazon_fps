@@ -95,7 +95,7 @@ module Spree
       if val.present?
         return val
       else
-        raise ArgumentError unless default
+        raise ArgumentError.new("No preferred #{pref.to_s} found on amazon fps gateway") unless default
       end
     end
 

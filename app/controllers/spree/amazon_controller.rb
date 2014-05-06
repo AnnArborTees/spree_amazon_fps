@@ -13,7 +13,7 @@ module Spree
       test_render_str << item_names.join(', ')
 
       test_render_str << "<br />adjustments: "
-      test_render_str << order.adjustments.all.map { |a| a.label }.join(', ')
+      test_render_str << order.adjustments.to_a.map { |a| a.label }.join(', ')
 
       test_render_str << "<br />total cost: " << order.display_total.to_s
 
@@ -21,7 +21,6 @@ module Spree
         accessKey:   payment_method.get(:access_key),
         amount:      order.total,
         description: item_names.join(' | '),
-        # referenceId: "order#{order.id}",
 
         signatureMethod:  'HmacSHA256',
         signatureVersion: '2',
@@ -57,7 +56,7 @@ module Spree
 
       @end_point = payment_method.end_point_url_str
 
-      render inline: test_render_str
+      # render inline: test_render_str
     end
 
     def complete
