@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe 'As a user', js: false do
+describe 'As a user', js: true do
   let!(:user) {create(:user)}
 
   context 'with a valid order' do
@@ -8,7 +8,7 @@ describe 'As a user', js: false do
 
     it 'I can pay using Amazon FPS' do
       visit '/'
-      expect(page).to have_content 'what'
+      sleep('30')
     end
   end
 end
