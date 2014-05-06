@@ -44,6 +44,8 @@ RSpec.configure do |config|
   config.include Spree::TestingSupport::UrlHelpers
   config.include Spree::TestingSupport::ControllerRequests
   config.include FeatureHelpers
+  config.include AmazonFpsHelpers
+  config.include AjaxHelpers
 
   # == Mock Framework
   #

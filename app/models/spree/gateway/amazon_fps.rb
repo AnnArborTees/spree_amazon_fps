@@ -92,7 +92,7 @@ module Spree
 
     def get(pref, default=nil)
       val = self.send(('preferred_'+pref.to_s).to_sym)
-      if val.present?
+      if (val.respond_to?(:present?) ? val.present? : !val.nil?)
         return val
       else
         raise ArgumentError.new("No preferred #{pref.to_s} found on amazon fps gateway") unless default
