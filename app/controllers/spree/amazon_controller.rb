@@ -95,11 +95,11 @@ module Spree
 
     def ipn
       # Testing this will require an open port
-      puts '-----------------@@@@####$$$$$$%%%%%%%%@@@@@@####$$$%%%%@@@@@####$$%%%'
-      puts 'RECEIVED IPN WHOAAAAAAAAAAAAAAA'
-      puts 'HERE ARE THE PARAMS'
-      puts params.to_s
-      puts '-----------------@@@@####$$$$$$%%%%%%%%@@@@@@####$$$%%%%@@@@@####$$%%%'
+      File::open('IPN_OMG.txt', "w") do |f| 
+        f << "HERE IT IS.\n"
+        f << "the ipn\n"
+        f << "it's real...."
+      end
     end
 
   private
