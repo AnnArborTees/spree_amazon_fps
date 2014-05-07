@@ -10,9 +10,9 @@ module Spree
       def initialize(action, response_xml)
         @action = action
         @doc = Nokogiri::XML(response_xml)
-        puts '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%'
-        puts response_xml
-        puts '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%'
+        # puts '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%'
+        # puts response_xml
+        # puts '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%'
       end
 
       def valid?
@@ -135,14 +135,14 @@ module Spree
       # underscores instead.
       options = Hash[options.map { |k,v| [k.to_s.gsub('_','.'), v] }]
 
-      puts '#################API_CALL#################'
-      puts 'uri: ' + uri.to_s
-      puts 'options: ' + options.to_s
+      # puts '#################API_CALL#################'
+      # puts 'uri: ' + uri.to_s
+      # puts 'options: ' + options.to_s
 
       uri.query = options.to_query
 
-      puts 'full path: ' + uri.to_s
-      puts '##########################################'
+      # puts 'full path: ' + uri.to_s
+      # puts '##########################################'
 
       uri
     end
