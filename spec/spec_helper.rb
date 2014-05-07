@@ -46,6 +46,8 @@ RSpec.configure do |config|
   config.include FeatureHelpers
   config.include AmazonFpsHelpers
   config.include AjaxHelpers
+  config.include Spree::TestingSupport::AuthorizationHelpers::Controller
+  config.include Devise::TestHelpers, type: :controller
 
   # == Mock Framework
   #
