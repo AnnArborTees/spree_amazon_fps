@@ -95,11 +95,11 @@ module Spree
 
     def ipn
       # Testing this will require an open port
-      puts '@@@@####$$$$$$%%%%%%%%@@@@@@####$$$%%%%@@@@@####$$%%%'
+      puts '-----------------@@@@####$$$$$$%%%%%%%%@@@@@@####$$$%%%%@@@@@####$$%%%'
       puts 'RECEIVED IPN WHOAAAAAAAAAAAAAAA'
       puts 'HERE ARE THE PARAMS'
       puts params.to_s
-      puts '@@@@####$$$$$$%%%%%%%%@@@@@@####$$$%%%%@@@@@####$$%%%'
+      puts '-----------------@@@@####$$$$$$%%%%%%%%@@@@@@####$$$%%%%@@@@@####$$%%%'
     end
 
   private

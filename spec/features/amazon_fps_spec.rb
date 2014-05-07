@@ -10,18 +10,22 @@ feature 'Amazon FPS Payment', js: true do
   let!(:payment_method) { create(:check_payment_method) }
   let!(:zone) { create(:zone) }
 
+  let!(:amazon_payment) {create(:amazon_payment,
+      preferred_access_key: amazon_access_key,
+      preferred_secret_key: amazon_secret_key
+    )}
+
+  before :each do
+    visit '/admin'
+    fill_in 'Email', with: user.email
+    fill_in 'Password', with: 'secret'
+    click_button 'Login'
+  end
+
   context 'with a valid order' do
     let!(:product) {create(:product, name: "Test Product")}
 
-    let!(:amazon_payment) {create(:amazon_payment,
-        preferred_access_key: amazon_access_key,
-        preferred_secret_key: amazon_secret_key
-      )}
-
     before :each do
-      Spree::CheckoutController.any_instance.stub try_spree_current_user: user
-      Spree::CheckoutController.any_instance.stub skip_state_validation?: true
-
       visit '/'
       add('Test Product').to_cart
       checkout
@@ -40,13 +44,41 @@ feature 'Amazon FPS Payment', js: true do
     end
   end
 
+  context 'with an invalid order' do
+    # Prices with certain decimals will always fail in Amazon's sandbox
+    let!(:bad_product) {create(:product, name: "Bad Product", price: 19.81)}
+    
+    before :each do
+      visit '/'
+      add('Bad Product').to_cart
+      checkout
+    end
+
+    scenario 'a payment will fail, and the order will not complete', wip: true do
+      pay_with_amazon { expect(page).to have_content 'Bad Product x1' }
+      expect(current_path).to eq '/checkout/payment'
+      expect(page).to have_content 'Amazon payment failed. You have not been charged.'
+    end
+  end
+
   context 'on the admin page', wip: true do
     before :each do
+      visit '/'
+      add('RoR Mug').to_cart
+      checkout
+      pay_with_amazon
+
       visit '/admin'
     end
 
     scenario 'I can refund a payment made with Amazon FPS' do
-      5.times { sleep(2) }
+      find('tr[data-hook=admin_orders_index_rows] > td:nth-child(2) > a').click
+      click_link 'Payments'
+      find('tr#payment_1 > td > a').click
+      click_link 'Refund'
+      click_button 'Refund'
+      expect(page).to have_content 'Refund Request Sent!'
+      expect(page).to have_content "-#{mug.display_price}"
     end
   end
 
