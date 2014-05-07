@@ -27,12 +27,12 @@ feature 'Amazon FPS Payment', js: true do
       checkout
     end
 
-    scenario'I can pay using Amazon FPS' do
+    scenario 'I can pay using Amazon FPS' do
       pay_with_amazon { expect(page).to have_content 'Test Product x1' }
       expect(page).to have_content 'Your order has been processed successfully'
     end
 
-    scenario'I cannot use incorrect credentials' do
+    scenario 'I cannot use incorrect credentials' do
       pay_with_amazon(email: 'garbage@example.com', password: 'garbage000') do
           expect(page).to have_content 'There was an error with your E-Mail/Password combination. Please try again.'
           false
@@ -45,7 +45,7 @@ feature 'Amazon FPS Payment', js: true do
       visit '/admin'
     end
 
-    scenario'I can refund a payment made with Amazon FPS' do
+    scenario 'I can refund a payment made with Amazon FPS' do
       5.times { sleep(2) }
     end
   end
