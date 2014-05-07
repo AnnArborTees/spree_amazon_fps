@@ -1,6 +1,6 @@
 Spree::Core::Engine.routes.draw do
   post 'amazon/fps' => 'amazon#fps'
-  get 'amazon/ipn' => 'amazon#ipn'
+  post 'amazon/ipn' => 'amazon#ipn'
   get 'amazon/complete' => 'amazon#complete'
   get 'amazon/abort' => 'amazon#abort'
 
