@@ -95,7 +95,7 @@ module Spree
 
     def ipn
       # Testing this will require an open port
-      File::open('IPN_OMG.txt', "w") do |f| 
+      File::open("#{Rails.root}/IPN_OMG.txt", "w+") do |f| 
         f << "HERE IT IS.\n"
         f << "the ipn\n"
         f << "it's real...."
