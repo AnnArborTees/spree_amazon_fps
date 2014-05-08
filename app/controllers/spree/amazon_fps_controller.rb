@@ -28,7 +28,7 @@ module Spree
 
         processImmediate: '0',
 
-        referenceId: Spree::AmazonCheckout.create({
+        referenceId: Spree::AmazonFpsCheckout.create({
                     status: 'Incomplete',
                     payment_method_id: payment_method.id
                   }).id.to_s,
@@ -57,7 +57,7 @@ module Spree
 
       raise ActionController::RoutingError.new('Invalid Amazon signature') unless verify_signature
 
-      checkout = Spree::AmazonCheckout.find params[:referenceId]
+      checkout = Spree::AmazonFpsCheckout.find params[:referenceId]
       checkout.update_attributes(transaction_id: params[:transactionId])
 
       order.payments.create!({
@@ -104,7 +104,7 @@ module Spree
       if params[:payment_method_id]
         Spree::PaymentMethod.find(params[:payment_method_id])
       elsif params[:referenceId]
-        Spree::AmazonCheckout.find(params[:referenceId]).payment_method
+        Spree::AmazonFpsCheckout.find(params[:referenceId]).payment_method
       elsif params[:errorMessage]
         nil
       else
