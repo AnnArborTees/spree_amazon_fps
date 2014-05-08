@@ -1,18 +1,18 @@
 <fieldset data-hook="amazon">
 
-	<div class="row">
-		<div class="alpha six columns">
-			<dl>
-				<dt>Transaction ID</dt>
-				<dd><%= payment.source.transaction_id %></dd>
-				<dt>Payment Status</dt>
-				<dd><%= payment.source.status %></dd>
-			</dl>
-		</div>
-	</div>
+  <div class="row">
+    <div class="alpha six columns">
+      <dl>
+        <dt>Transaction ID</dt>
+        <dd><%= payment.source.transaction_id %></dd>
+        <dt>Payment Status</dt>
+        <dd><%= payment.source.status %></dd>
+      </dl>
+    </div>
+  </div>
 
-	<% if payment.source.status != 'Refunded' && payment.source.status != 'Incomplete' %>
-		<%= button_link_to 'Refund', spree.amazon_refund_admin_order_payment_path(@order, payment), icon: 'icon-dollar' %>
-	<% end %>
+  <% if payment.source.status != 'Refunded' && payment.source.status != 'Incomplete' %>
+    <%= button_link_to 'Refund', spree.amazon_refund_admin_order_payment_path(@order, payment), icon: 'icon-dollar' %>
+  <% end %>
 
 </fieldset>
