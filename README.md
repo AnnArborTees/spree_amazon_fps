@@ -19,6 +19,11 @@ bundle
 bundle exec rails g spree_amazon_fps:install
 ```
 
+The extension adds Spree::Gateway::AmazonFps to the list of providers the payment methods admin page. When you create a payment method using the AmazonFps provider, you will have to specify an access key and a secret key. These come from your Amazon AWS developer account: http://aws.amazon.com/. You may also specify the server, which defaults to sandbox. Any value other than 'sandbox' will use Amazon's production servers.
+
+Keep in mind when using the sandbox server that orders with prices that have decimal values between .60 and .89 will always fail, for testing purposes.
+
+
 Testing
 -------
 
@@ -29,11 +34,19 @@ bundle
 bundle exec rake
 ```
 
-When testing your applications integration with this extension you may use it's factories.
+When testing your applications integration with this extension you may use its factories.
 Simply add this require statement to your spec_helper:
 
 ```ruby
 require 'spree_amazon_fps/factories'
 ```
 
-Copyright (c) 2014 [name of extension creator], released under the New BSD License
+If you want to run SpreeAmazonFPS' tests with your own Amazon credentials (email, password, developer secret/access keys), create a file called `spree_amazon_fps_root/spec/dummy/config/amazon_fps_tests.yml`. In there, you can define email, password, access_key, and secret_key like so:
+```yaml
+email: 'you@yourdomain.com'
+password: 'superSecurepw01'
+access_key: 'ASDFGHJKLK'
+secret_key: 'S0M3S3Cr3TK3y'
+```
+
+Copyright (c) 2014 Ann Arbor T-Shirt Company, LLC, released under the New BSD License

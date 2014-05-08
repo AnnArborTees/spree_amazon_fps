@@ -44,6 +44,7 @@ describe Spree::Admin::AmazonController, controller: true do
       expect(assigns[:amazon_params][:amount]).to eq order.total
       expect(assigns[:amazon_params][:signatureMethod]).to eq 'HmacSHA256'
       expect(assigns[:amazon_params][:signatureVersion]).to eq '2'
+      expect(assigns[:amazon_params][:cobrandingStyle]).to eq 'logo'
       expect(assigns[:amazon_params][:returnUrl]).to eq 'http://example.org/amazon/complete'
       expect(assigns[:amazon_params][:abandonUrl]).to eq 'http://example.org/amazon/abort'
       expect(assigns[:amazon_params][:ipnUrl]).to eq 'http://example.org/amazon/ipn'

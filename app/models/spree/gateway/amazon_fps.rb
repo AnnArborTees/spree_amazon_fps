@@ -3,7 +3,6 @@ module Spree
     preference :access_key, :string
     preference :secret_key, :string
     preference :server, :string, default: 'sandbox'
-    preference :logourl, :string, default: ''
 
     # Begin inner classes for API calls
     class ApiResponse

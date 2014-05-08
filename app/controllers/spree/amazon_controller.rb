@@ -20,6 +20,8 @@ module Spree
         signatureMethod:  'HmacSHA256',
         signatureVersion: '2',
 
+        cobrandingStyle: 'logo',
+
         returnUrl:  full_url_for(action: 'complete'),
         abandonUrl: full_url_for(action: 'abort'),
         ipnUrl:     full_url_for(action: 'ipn'),

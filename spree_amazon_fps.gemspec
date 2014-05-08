@@ -2,14 +2,14 @@
 Gem::Specification.new do |s|
   s.platform    = Gem::Platform::RUBY
   s.name        = 'spree_amazon_fps'
-  s.version     = '0.1.0'
+  s.version     = '1.0.0'
   s.summary     = 'Amazon Flexible Payment System'
   s.description = 'Adds Amazon Flexible Payment System to Spree Payment Methods'
   s.required_ruby_version = '>= 1.9.3'
 
-  s.author    = 'Nigel Baillie'
-  s.email     = 'metreckk@gmail.com'
-  # s.homepage  = 'http://www.spreecommerce.com'
+  s.author    = 'Nigel Baillie (Ann Arbor T-Shirt Company, LLC)'
+  s.email     = 'metreckk@annarbortees.com'
+  s.homepage  = 'http://www.annarbortees.com'
 
   s.files       = `git ls-files`.split("\n")
   s.test_files  = `git ls-files -- {test,spec,features}/*`.split("\n")
