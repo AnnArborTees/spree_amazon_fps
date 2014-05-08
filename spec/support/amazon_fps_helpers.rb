@@ -12,6 +12,10 @@ module AmazonFpsHelpers
 		grab('password') or '6dY4haWB'
 	end
 
+	def amazon_fps_url
+    'https://payments-sandbox.amazon.com/sdui/sdui/overview'
+  end
+
 private
 	def grab(name)
 		filename = "#{Rails.root}/config/amazon_fps_tests.yml"

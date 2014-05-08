@@ -149,9 +149,6 @@ private
     end
   end
 
-  def amazon_fps_url
-    'https://payments-sandbox.amazon.com/sdui/sdui/overview'
-  end
   def log_in_to_amazon_payments_account(options={})
     visit amazon_fps_url
     if first 'a', text: 'Sign Out'
