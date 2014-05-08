@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Spree::Admin::AmazonController, controller: true do
+describe Spree::Admin::AmazonFpsController, controller: true do
   let!(:user) {create(:user, email: 'test@example.com')}
 
   context 'when current_order is nil' do

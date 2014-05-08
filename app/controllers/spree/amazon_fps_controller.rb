@@ -1,7 +1,7 @@
 require 'net/http'
 
 module Spree
-  class AmazonController < StoreController
+  class AmazonFpsController < StoreController
     def fps
       order = current_order
       raise(ActiveRecord::RecordNotFound) unless order

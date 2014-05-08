@@ -1,8 +1,8 @@
 Spree::Core::Engine.routes.draw do
-  post 'amazon/fps' => 'amazon#fps'
-  post 'amazon/ipn' => 'amazon#ipn'
-  get 'amazon/complete' => 'amazon#complete'
-  get 'amazon/abort' => 'amazon#abort'
+  post 'amazon/fps' => 'amazon_fps#fps'
+  post 'amazon/ipn' => 'amazon_fps#ipn'
+  get 'amazon/complete' => 'amazon_fps#complete'
+  get 'amazon/abort' => 'amazon_fps#abort'
 
   namespace :admin do
   	resources :orders, only: [] do
