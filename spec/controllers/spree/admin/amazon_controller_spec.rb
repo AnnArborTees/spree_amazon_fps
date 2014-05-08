@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Spree::Admin::AmazonController do
+describe Spree::Admin::AmazonController, controller: true do
   let!(:user) {create(:user, email: 'test@example.com')}
 
   context 'when current_order is nil' do
@@ -49,7 +49,14 @@ describe Spree::Admin::AmazonController do
       expect(assigns[:amazon_params][:ipnUrl]).to eq 'http://example.org/amazon/ipn'
       expect(assigns[:amazon_params][:processImmediate]).to eq '0'
       expect(assigns[:amazon_params][:immediateReturn]).to eq '1'
-      # expect(assigns[:amazon_params][:signature]).to eq 'bNPcPquODj8kuz+ezew9blYAUavrgNBvyw5gJaOjAWU='
+    end
+
+    context 'with an order that results in a description of > 100 characters' do
+      let!(:order) {create(:order_with_line_items)}
+
+      it 'truncades the description, trailing in "..."' do
+        expect(assigns[:amazon_params][:description][-3..-1]).to eq '...'
+      end
     end
   end
 end

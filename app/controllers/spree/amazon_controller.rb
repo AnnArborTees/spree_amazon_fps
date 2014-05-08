@@ -9,17 +9,9 @@ module Spree
       item_names = order.line_items.map { |item| item.product.name + " x#{item.quantity}: " + item.display_total.to_s }
       item_names << "Shipping: #{order.display_shipment_total}"
 
-      test_render_str = 'names: '
-      test_render_str << item_names.join(', ')
-
-      test_render_str << "<br />adjustments: "
-      test_render_str << order.adjustments.to_a.map { |a| a.label }.join(', ')
-
-      test_render_str << "<br />total cost: " << order.display_total.to_s
-
       item_names_str = item_names.join ' | '
       # TODO do a better job at truncation
-      item_names_str = item_names_str[0..99] if item_names_str.length > 100
+      item_names_str = item_names_str[0..96]+'...' if item_names_str.length > 100
       @amazon_params = {
         accessKey:   payment_method.get(:access_key),
         amount:      order.total,
@@ -48,20 +40,7 @@ module Spree
       )
       @amazon_params[:signature] = signature
 
-
-      test_render_str << '<br /><br />'
-      @amazon_params.each_pair do |key, val|  
-        test_render_str << key.to_s << ": " << val.to_s
-        test_render_str << "<br />"
-      end
-
-      # puts '*****************************************'
-      # puts test_render_str.gsub('<br />', "\n")
-      # puts '*****************************************'
-
       @end_point = payment_method.end_point_url_str
-
-      # render inline: test_render_str
     end
 
     def complete
