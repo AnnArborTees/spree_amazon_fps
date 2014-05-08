@@ -38,9 +38,30 @@ feature 'Amazon FPS Payment', js: true do
 
     scenario 'I cannot use incorrect credentials' do
       pay_with_amazon(email: 'garbage@example.com', password: 'garbage000') do
-          expect(page).to have_content 'There was an error with your E-Mail/Password combination. Please try again.'
-          false
+          expect(page).to have_content 'There was an error with your E-Mail/Password combination. Please try again.'; false
         end
+    end
+
+    scenario 'Amazon FPS transactions are properly listed on my Amazon Payments account' do
+      pay_with_amazon
+      expect(page).to have_content 'Your order has been processed successfully'
+
+      log_in_to_amazon_payments_account
+      first('a', text: 'Details').click
+      now = Time.now
+      expect_transaction_details(
+        {'Amount'         => "-#{product.display_price}",
+         'Date Completed' => Regexp.new("#{Date::MONTHNAMES[now.month]} #{now.day}, #{now.year}"),
+         'For'            => /Test Product x1.*/,
+         'Type'           => "Payment",
+         'Status'         => "Success" })
+    end
+
+    scenario 'I am redirected properly if I leave the Amazon payment page' do
+      pay_with_amazon do
+        all('a', text: 'here').last.click; false
+      end
+      expect(current_path).to eq '/checkout/address'
     end
   end
 
@@ -54,14 +75,14 @@ feature 'Amazon FPS Payment', js: true do
       checkout
     end
 
-    scenario 'a payment will fail, and the order will not complete', wip: true do
+    scenario 'a payment will fail, and the order will not complete' do
       pay_with_amazon { expect(page).to have_content 'Bad Product x1' }
       expect(current_path).to eq '/checkout/payment'
       expect(page).to have_content 'Amazon payment failed. You have not been charged.'
     end
   end
 
-  context 'on the admin page', wip: true do
+  context 'on the admin page' do
     before :each do
       visit '/'
       add('RoR Mug').to_cart
@@ -79,6 +100,14 @@ feature 'Amazon FPS Payment', js: true do
       click_button 'Refund'
       expect(page).to have_content 'Refund Request Sent!'
       expect(page).to have_content "-#{mug.display_price}"
+
+      log_in_to_amazon_payments_account
+      first('a', text: 'Details').click
+      expect_transaction_details(
+        {'Amount' => mug.display_price,
+         'Type'   => 'Refund',
+         'Status' => 'Success'
+        })
     end
   end
 
@@ -117,6 +146,33 @@ private
     if !block_given? || yield
       2.times do first('input.submit').click unless page.has_content? 'Processing Payment' end
       wait_for_redirect
+    end
+  end
+
+  def amazon_fps_url
+    'https://payments-sandbox.amazon.com/sdui/sdui/overview'
+  end
+  def log_in_to_amazon_payments_account(options={})
+    visit amazon_fps_url
+    if first 'a', text: 'Sign Out'
+      click_link 'Sign Out'
+      click_link 'Sign In'
+    end
+
+    within 'form[name=signIn]' do
+      fill_in    'email', with: options[:email] || amazon_email
+      fill_in 'password', with: options[:password] || amazon_password
+      find('#signInSubmit').click
+    end
+
+    expect(page).to have_content('You are in Amazon Payments Sandbox')
+  end
+  def expect_transaction_details(options)
+    within 'table.txnDetails > tbody' do
+      options.each do |k, v|
+        find('tr > th', text: "#{k.to_s}:")
+        find('tr > td', text: v)
+      end
     end
   end
 end

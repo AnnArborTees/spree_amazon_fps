@@ -7,6 +7,7 @@ module Spree
 
     # Begin inner classes for API calls
     class ApiResponse
+      attr_reader :action
       def initialize(action, response_xml)
         @action = action
         @doc = Nokogiri::XML(response_xml)
@@ -33,12 +34,16 @@ module Spree
         @doc.css('Response > Errors > Error > Message').first.content if error
       end
 
+      def id
+        object_id
+      end
+
       def respond_to?(name)
         !@doc.css("#{@action}Response > #{@action}Result > #{name}").empty?
       end
 
       def method_missing(name, *args, &block)
-        return nil if error
+        super if error
         super unless respond_to? name
         @doc.css("#{@action}Response > #{@action}Result > #{name}").first.content
       end
@@ -152,22 +157,44 @@ module Spree
     end
 
     def purchase(amount, checkout, options)
+      result = false
+
       resp = api.GetTransactionStatus :TransactionId => checkout.transaction_id
 
-      result = Class.new do
-        def initialize(s); @success = s; end
-        def success?; @success; end
-        def authorization; nil; end
-      end.new resp.StatusCode == 'Success'
+      if resp.valid? && !resp.error && resp.TransactionStatus == 'Reserved'
+        resp = api.Settle :ReserveTransactionId => checkout.transaction_id
 
-      if result.success?
+        if resp.TransactionStatus == 'Pending' || resp.TransactionStatus == 'Success'
+          transaction_id = resp.TransactionId
+          begin
+            sleep 1
+            resp = api.GetTransactionStatus :TransactionId => transaction_id
+          end while (resp.valid? && !resp.error) && resp.StatusCode == 'Pending'
+
+          if resp.StatusCode == 'Success'
+            result = true
+            checkout.transaction_id = resp.TransactionId
+          end
+        end
+      elsif resp.error || !resp.valid?
+        puts '*****Transaction Error*****'
+        puts resp.error if resp.error
+        puts 'API error' if !resp.valid?
+        puts '***************************'
+      end
+
+      if result
         checkout.status = 'Complete'
       else
         checkout.status = 'Failed'
       end
       checkout.save
 
-      result
+      return Class.new do
+      def initialize(s); @success = s; end
+      def success?; @success; end
+      def authorization; nil; end
+      end.new result
     end
 
     def refund(payment, amount)

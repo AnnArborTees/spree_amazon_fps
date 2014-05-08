@@ -17,10 +17,13 @@ module Spree
 
       test_render_str << "<br />total cost: " << order.display_total.to_s
 
+      item_names_str = item_names.join ' | '
+      # TODO do a better job at truncation
+      item_names_str = item_names_str[0..99] if item_names_str.length > 100
       @amazon_params = {
         accessKey:   payment_method.get(:access_key),
         amount:      order.total,
-        description: item_names.join(' | '),
+        description: item_names_str,
 
         signatureMethod:  'HmacSHA256',
         signatureVersion: '2',
@@ -28,6 +31,8 @@ module Spree
         returnUrl:  full_url_for(action: 'complete'),
         abandonUrl: full_url_for(action: 'abort'),
         ipnUrl:     full_url_for(action: 'ipn'),
+
+        processImmediate: '0',
 
         referenceId: Spree::AmazonCheckout.create({
                     status: 'Incomplete',
@@ -62,14 +67,18 @@ module Spree
     def complete
       order = current_order
       raise(ActiveRecord::RecordNotFound) unless order
+      
+      unless payment_method
+        flash[:error] = params[:errorMessage]
+        redirect_to checkout_state_path(order.state) unless payment_method
+        return
+      end
 
       raise ActionController::RoutingError.new('Invalid Amazon signature') unless verify_signature
-      
+
       checkout = Spree::AmazonCheckout.find params[:referenceId]
       checkout.update_attributes(transaction_id: params[:transactionId])
 
-      # Might have to somehow move this logic into a separate function
-      # in case of IPN working
       order.payments.create!({
         source: checkout,
         amount: order.total,
@@ -81,16 +90,17 @@ module Spree
         flash[:commerce_tracking] = "nothing special"
         redirect_to order_path(order, token: order.token)
       else
-        # TODO somehow grab a description of the error.
         flash[:error] = 'Amazon payment failed. You have not been charged.'
         redirect_to checkout_state_path(order.state)
       end
     end
 
     def abort
-      rend = 'oh nooooooooo (aborted)<br />'
-      rend << "<a href='/checkout/delivery'>Back to checkout</a>"
-      render text: rend
+      if current_order
+        redirect_to checkout_state_path(current_order)
+      else
+        redirect_to checkout_path
+      end
     end
 
     def ipn
@@ -114,6 +124,8 @@ module Spree
         Spree::PaymentMethod.find(params[:payment_method_id])
       elsif params[:referenceId]
         Spree::AmazonCheckout.find(params[:referenceId]).payment_method
+      elsif params[:errorMessage]
+        nil
       else
         raise ActiveRecord::RecordNotFound.new("There is no PaymentMethod information in the parameters")
       end
