@@ -51,13 +51,5 @@ describe Spree::Admin::AmazonController, controller: true do
       expect(assigns[:amazon_params][:processImmediate]).to eq '0'
       expect(assigns[:amazon_params][:immediateReturn]).to eq '1'
     end
-
-    context 'with an order that results in a description of > 100 characters' do
-      let!(:order) {create(:order_with_line_items)}
-
-      it 'truncades the description, trailing in "..."' do
-        expect(assigns[:amazon_params][:description][-3..-1]).to eq '...'
-      end
-    end
   end
 end

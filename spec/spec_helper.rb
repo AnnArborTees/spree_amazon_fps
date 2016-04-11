@@ -59,6 +59,8 @@ RSpec.configure do |config|
   config.mock_with :rspec
   config.color = true
 
+  config.infer_spec_type_from_file_location!
+
   # Remove this line if you're not using ActiveRecord or ActiveRecord fixtures
   config.fixture_path = "#{::Rails.root}/spec/fixtures"
 
@@ -78,7 +80,7 @@ RSpec.configure do |config|
   end
 
   # Before each spec check if it is a Javascript test and switch between using database transactions or not where necessary.
-  config.before :each do
+  config.before :each do |example|
     if example.metadata[:js]
       Capybara.current_driver = :selenium
       DatabaseCleaner.strategy = :truncation

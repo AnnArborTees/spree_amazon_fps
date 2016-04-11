@@ -4,6 +4,6 @@ FactoryGirl.define do
     type 'Spree::Gateway::AmazonFps'
     description 'Test Amazon Gateway'
     active 1
-    environment :test
+    # environment :test
   end
 end

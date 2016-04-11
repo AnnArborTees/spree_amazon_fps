@@ -9,9 +9,7 @@ module Spree
       item_names = order.line_items.map { |item| item.product.name + " x#{item.quantity}: " + item.display_total.to_s }
       item_names << "Shipping: #{order.display_shipment_total}"
 
-      item_names_str = item_names.join ' | '
-      # TODO do a better job at truncation
-      item_names_str = item_names_str[0..96]+'...' if item_names_str.length > 100
+      item_names_str = item_names.join(' | ').truncate(100)
       @amazon_params = {
         accessKey:   payment_method.get(:access_key),
         amount:      order.total,
